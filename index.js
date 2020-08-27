@@ -9,7 +9,7 @@ var through = require('through2'),
   Promise = require('promise'),
   fs = require('fs'),
   md5 = require('MD5'),
-  s3 = require('s3');
+  s3 = require('@auth0/s3');
 
 const PLUGIN_NAME = 'gulp-s3-replace';
 const linksRegExp = /(src|href)="([^\'\"]+)/ig;
@@ -171,16 +171,19 @@ function createUploadPromise(basePath, bucketName, destOriginalFilePath, s3Clien
       utime: 0
     };
 
-    if(!fileExists(metaPath)) {
+    if (!fileExists(metaPath)) {
       fs.writeFileSync(metaPath, JSON.stringify(metaInfo));
     } else {
       metaInfo = JSON.parse(fs.readFileSync(metaPath));
     }
 
-    if(fileInfo['ctime'].getTime() <= metaInfo.utime) {
+    if (fileInfo['ctime'].getTime() <= metaInfo.utime) {
       gutil.log(gutil.colors.yellow('[SUCCESS]', destFilePath + " -> " + publicUrl));
 
-      resolve({originalUrl: destOriginalFilePath, publicUrl: publicUrl});
+      resolve({
+        originalUrl: destOriginalFilePath,
+        publicUrl: publicUrl
+      });
       return;
     }
 
@@ -189,13 +192,15 @@ function createUploadPromise(basePath, bucketName, destOriginalFilePath, s3Clien
     fs.writeFileSync(metaPath, JSON.stringify(metaInfo));
 
     uploader.on('error', function (err) {
-      self.emit('error', new gutil.PluginError(PLUGIN_NAME, 'Unable to upload:' + err.stack));
-      callback()
+      gutil.log(gutil.colors.magenta('[ERROR]', err.stack));
     });
 
     uploader.on('end', function () {
       gutil.log(gutil.colors.green('[SUCCESS]', destFilePath + " -> " + publicUrl));
-      resolve({originalUrl: destOriginalFilePath, publicUrl: publicUrl});
+      resolve({
+        originalUrl: destOriginalFilePath,
+        publicUrl: publicUrl
+      });
     });
   });
 }
@@ -206,8 +211,7 @@ function directoryExists(path) {
     if (stats.isDirectory()) {
       return true;
     }
-  }
-  catch (e) {
+  } catch (e) {
     return false;
   }
 }
@@ -218,8 +222,7 @@ function fileExists(path) {
     if (stats.isFile()) {
       return true;
     }
-  }
-  catch (e) {
+  } catch (e) {
     return false;
   }
 }
