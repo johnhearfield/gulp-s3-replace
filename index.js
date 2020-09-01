@@ -77,6 +77,11 @@ function gulpS3Replace(options) {
           return;
         }
 
+        if (originalFilePath.indexOf('http') !== -1) {
+          loop.next();
+          return;
+        }
+
         promises.push(createUploadPromise(basePath, options.bucketName, originalFilePath, s3Client));
 
         loop.next();
